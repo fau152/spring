@@ -136,3 +136,6 @@ public class DownloadServlet extends HttpServlet {
     }
 }
 ```
+参考博客：
+1. response.reset()相关：https://blog.csdn.net/xingkong22star/article/details/39207015
+2. response.setHeader()相关：https://www.cnblogs.com/mingforyou/p/4259113.html

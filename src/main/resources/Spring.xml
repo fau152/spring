@@ -35,4 +35,16 @@
         <constructor-arg name="age" value="20"/>
         <constructor-arg name="gender" value="女"/>
     </bean>
+
+<!--======================================================================-->
+    <!--ref的使用-->
+    <bean id="userDao" class="com.colin.dao.impl.UserDaoImpl"/>
+
+    <bean id="userService" class="com.colin.service.impl.UserServiceImpl">
+        <constructor-arg name="userDao" ref="userDao"/>
+    </bean>
+
+    <bean id="userServlet" class="com.colin.servlet.UserServlet">
+        <constructor-arg name="userService" ref="userService"/>
+    </bean>
 </beans>
