@@ -4,8 +4,8 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd"
        default-autowire="byName">
-    <bean id="author" class="com.colin.bean.User"/>
-    <bean id="author1" class="com.colin.bean.User"/>
-    <bean id="blog" class="com.colin.bean.Blog"/>
+    <bean id="author" class="com.colin.xml.bean.User"/>
+    <bean id="author1" class="com.colin.xml.bean.User"/>
+    <bean id="blog" class="com.colin.xml.bean.Blog"/>
 
 </beans>
