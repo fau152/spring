@@ -481,6 +481,54 @@ public class LifeCycle implements InitializingBean, DisposableBean {
 ### 三种实现方法的优先级问题
 毋庸置疑的是，第一种和第二种一定是**局部配置优先于全局配置**，重点是第三种实现方式的优先级，
 将所有的配置全都写进代码中，测试结果如下:
+
 ![img.png](img/生命周期优先级测试结果.png)
+
 即：第三种实现接口的方式会在第一种局部配置的方式之前执行，但是第一种方式也会执行，
 第一种配置覆盖了第二种配置。
+
+# 九、读取配置文件
+
+**步骤：**
+
+一、准备配置文件
+```properties
+jdbc.driver=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/xxx
+jdbc.username=root
+jdbc.password=wanglong
+```
+二、读取配置文件（property-placeholder）
+```xml
+<context:property-placeholder location="classpath:jdbc.properties"/>
+```
+三、使用配置文件中的`K-V对`
+```xml
+<bean id="driverXml" class="com.colin.xml.driver.DriverXml">
+   <constructor-arg index="0" value="${jdbc.driver}"/>
+   <constructor-arg index="1" value="${jdbc.url}"/>
+   <constructor-arg index="2" value="${jdbc.username}"/>
+   <constructor-arg index="3" value="${jdbc.password}"/>
+</bean>
+```
+四、测试
+```java
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class DriverXmlTest {
+   ApplicationContext ac = new ClassPathXmlApplicationContext("driver-xml.xml");
+
+   @Test
+   public void test(){
+      DriverXml driverXml = ac.getBean("driverXml", DriverXml.class);
+      System.out.println(driverXml);
+   }
+}
+```
+![img.png](img/读取配置文件.png)
+
+**注意：**
+1. classpath:是源文件根目录。（src/resources） 
+2. 加k-v键值对常量的时候，一定要加xxx.xxx（例如jdbc.username），否则直接使用username，则默认读取的是电脑的系统环境变量中的username

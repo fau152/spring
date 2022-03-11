@@ -408,5 +408,223 @@ public class ScopeService {
 **注意：**
 1. 这里的原型模式和单例模式的前提是必须是同一个ApplicationContext
 
+# 四、@Configuration注解
+我们使用xml形式进行依赖注入配置时，常常使用一个xml形式的配置文件，BeanFactory使用的是`ClassPathXmlApplicationContext("xxx.xml");`
+现在使用annotation形式进行配置，我们使用一个被`@Configuration`注解修饰的配置类进行配置，BeanFactory可以使用原来的配置方式，也可以使用
+`AnnotationConfigApplicationContext(xxxConfig.class);`
+
+此时，被@Configuration修饰的类，相当于xml文件中的`<beans>`标签，该类中的方法被@Bean修饰
+相当于xml文件中`<bean>`标签。@Bean注解有一个value参数，相当于`<bean>`标签的`beanId`，如果不设置，
+**默认是方法名**。
+
+## 使用步骤
+一、创建测试Bean类（模拟第三方jar包导入的类）
+```java
+//接口
+public interface Store<T> {
+}
+```
+```java
+//实现类1
+import com.colin.annotation.configuration.Store;
+public class StringStore implements Store<String> {
+}
+```
+```java
+import com.colin.annotation.configuration.Store;
+public class IntegerStore implements Store<Integer> {
+}
+```
+二、创建Service类（模拟自己写的类）
+```java
+import com.colin.annotation.configuration.impl.IntegerStore;
+import com.colin.annotation.configuration.impl.StringStore;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class StoreService {
+    @Autowired
+    IntegerStore integerStore;
+
+    @Autowired
+    StringStore stringStore;
+
+    public void method(){
+        System.out.println(integerStore);
+        System.out.println(stringStore);
+    }
+}
+```
+三、创建配置类并进行配置
+```java
+import com.colin.annotation.configuration.impl.IntegerStore;
+import com.colin.annotation.configuration.impl.StringStore;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+
+@ComponentScan("com.colin.annotation.configuration")
+@Configuration
+public class StoreConfig {
+    @Bean
+    public StringStore stringStore(){
+        return new StringStore();
+    }
+
+    @Bean
+    public IntegerStore integerStore(){
+        return new IntegerStore();
+    }
+}
+```
+四、使用测试查看是否注入
+```java
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+public class StoreConfigTest {
+   ApplicationContext ac = new AnnotationConfigApplicationContext(StoreConfig.class);
+
+   @Test
+   public void test(){
+      //测试配置类中内容是否注入成功
+      StoreService storeService = ac.getBean("storeService", StoreService.class);
+      storeService.method();
+      //测试storeConfig是否会放到容器中
+      StoreConfig storeConfig = ac.getBean("storeConfig", StoreConfig.class);
+      System.out.println(storeConfig);
+   }
+}
+```
+![img.png](img/@Configuration测试.png)
+
+无报错表示注入成功。
+
+**注意：**
+1. @Configuration包含@Componet注解，所以被该注解修饰的类也会注入到Spring容器中。
+2. @Configuration只能放在`TYPE`（类、接口、枚举）上。
+3. 使用@Configuration注解的方式，主要是为了将我们使用的第三方jar包中的类放到IOC容器中，而`组件扫描器 + @Componet`
+的方式主要是将自己写的类放到IOC容器中。
+   
+# 五、@Named和@Inject
+这一组注解相当于@Componet和@Autowired注解的使用场景，但是它是javax提供的一组注解。
+
+在使用之前我们先引入其jar包。
+```xml
+<!-- https://mvnrepository.com/artifact/javax.inject/javax.inject -->
+<dependency>
+    <groupId>javax.inject</groupId>
+    <artifactId>javax.inject</artifactId>
+    <version>1</version>
+</dependency>
+```
+使用方法和@Componet和@Autowired注解使用方法一样
+```java
+import javax.inject.Inject;
+import javax.inject.Named;
+
+@Named
+public class InjectService {
+    @Inject
+    private InjectDao injectDao;
+    
+    public InjectService() {
+    }
+
+    @Inject
+    public InjectService(InjectDao injectDao) {
+        this.injectDao = injectDao;
+    }
+    
+    @Inject
+    public void setInjectDao(InjectDao injectDao) {
+        this.injectDao = injectDao;
+    }
+    
+    public void method() {
+        injectDao.select();
+    }
+}
+```
+
+**注意：**
+1. @Inject等同于@Autowired，可以放在属性（自动注入）、普通方法（set注入）、构造函数（constructor注入）上
+
+# 六、@Value
 
 
+一、准备配置文件
+```properties
+jdbc.driver=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/xxx
+jdbc.username=root
+jdbc.password=wanglong
+```
+二、读取配置文件、配置组件扫描器
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd">
+   <context:property-placeholder location="classpath:jdbc.properties"/>
+   <context:component-scan base-package="com.colin.annotation.driver"/>
+</beans>
+```
+三、@Value给属性赋值（使用配置文件中的`K-V对`）
+```java
+import lombok.ToString;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@ToString
+@Component("driver")
+public class DriverAnnotation {
+    @Value("${jdbc.driver}")
+    private String driver;
+    @Value("${jdbc.url}")
+    private String url;
+    @Value("${jdbc.username}")
+    private String username;
+    @Value("${jdbc.password}")
+    private String password;
+}
+```
+四、测试
+```java
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class DriverAnnotationTest {
+    ApplicationContext ac = new ClassPathXmlApplicationContext("driver-annotation.xml");
+
+    @Test
+    public void test(){
+        DriverAnnotation da = ac.getBean("driver", DriverAnnotation.class);
+        System.out.println(da);
+    }
+}
+```
+结果：
+
+![img.png](img/@Value测试.png)
+
+**注意：**
+1. 在导包的时候要使用springframework的包，不要错将lombok包导入。
+
+---
+
+**注解总结：**
+   - `@Componet / @Service / @Controller / @Repository / @Named` 将类本身注入容器中
+   - `@Autowired / @Resource / @Inject`  给类的成员变量注入值
+   - `@Configuration / @Bean`  用来替换xml文件进行配置
+   - `@Qualifier`  在注入泛型产生歧义时确定注入对象
+   - `@Order`  用于排序
+   - `@Scope`  用于设置BeanScope
+   - `@Value`  用于给属性赋值
