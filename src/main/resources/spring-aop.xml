@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        https://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        https://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop 
+        https://www.springframework.org/schema/aop/spring-aop.xsd">
+    <context:component-scan base-package="com.colin.aop.aop"/>
+
+    <!--aop注解扫描-->
+<!--    <aop:aspectj-autoproxy/>-->
+
+
+
+    <aop:config>
+        <aop:aspect ref="loggerAspect">
+            <aop:pointcut id="daoPointCut"
+                          expression="execution(* com.colin.aop.aop.impl.*DaoImpl.insert*(..)) ||
+                         execution(* com.colin.aop.aop.impl.*DaoImpl.delete*(..)) ||
+                         execution(* com.colin.aop.aop.impl.*DaoImpl.update*(..))"/>
+<!--            <aop:after method="after" pointcut-ref="daoPointCut"/>-->
+<!--            <aop:before method="before" pointcut-ref="daoPointCut"/>-->
+<!--            <aop:after-throwing method="throwing" pointcut-ref="daoPointCut"/>-->
+<!--            <aop:after-returning method="returning" pointcut-ref="daoPointCut"/>-->
+            <aop:around method="around" pointcut-ref="daoPointCut"/>
+        </aop:aspect>
+    </aop:config>
+
+</beans>
